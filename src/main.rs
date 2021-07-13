@@ -9,7 +9,7 @@ use std::io::{self, BufRead, BufReader, Read, Write};
 use std::path::Path;
 use std::process::exit;
 
-static VERSION: &str = "0.1.1";
+static VERSION: &str = "0.1.2";
 
 struct Params {
     infile: String,
@@ -39,10 +39,10 @@ fn usage(arg0: &str, opts: Options) {
     let s = format!(
         "\
 Summary:
-    Computes GZIP compressibility for genomic regions in every given interval (--seqlen)
+Compute GZIP compressibility in fixed-sized genomic intervals from FASTA
 
 Usage:
-    {} --inFile hg38.fa --outfile output.bed [--seqlen 50] [--version|-v] [--help|-h]
+    {} --inFile hg38.fa --outFile output.bed[.gz] [--seqlen 50] [--version|-v] [--help|-h]
 
 Output:
     The output has 6 columns:
@@ -50,8 +50,9 @@ Output:
         2) start coordinate;
         3) end coordinate;
         4) sequence;
-        5) GZIP compressibility ();
-        6) genome strand;",
+        5) GZIP compression ratio (raw length over compressed);
+        6) genome strand (present in compliance to BED format, always '+');
+",
         arg0
     );
     eprintln!("{}", opts.usage(&s));
@@ -112,12 +113,9 @@ fn proc_args(args: &Vec<String>, mut opts: Options) -> Params {
         None => false,
     };
 
-    let seqlen = match matches.opt_str("seqlen") {
-        Some(s) => match s.parse::<u32>() {
-            Ok(l) => l,
-            Err(e) => panic!("--seqlen cannot be parsed: {}!", e),
-        },
-        _ => panic!("--seqlen incorrect!"),
+    let seqlen: u32 = match matches.opt_get_default("seqlen", 50) {
+        Ok(x) => x,
+        Err(e) => panic!("--seqlen cannot be parsed: {}!", e),
     };
 
     let params = Params {
@@ -169,7 +167,7 @@ fn main() {
                     let mut gz = read::GzEncoder::new(s.as_bytes(), Compression::best());
                     let gzlen = match gz.read(&mut _buf) {
                         Ok(x) => x,
-                        Err(e) => panic!(format!("Compression failed! {}", e)),
+                        Err(e) => panic!("Compression failed! {}", e),
                     };
                     let r = seq.as_bytes().len() as f32 / (gzlen - 10) as f32;
                     if !gzout {
@@ -216,7 +214,7 @@ fn main() {
                     let mut gz = read::GzEncoder::new(s.as_bytes(), Compression::best());
                     let gzlen = match gz.read(&mut _buf) {
                         Ok(x) => x,
-                        Err(e) => panic!(format!("Compression failed! {}", e)),
+                        Err(e) => panic!("Compression failed! {}", e),
                     };
                     // after compression GACTTGCAGTGGGGGGA becomes
                     //          [1F,8B,08,00,00,00,00,00,02,FF,73,77,74,0E,09,71,77,76,74,0F,71,07,03,47,00]
