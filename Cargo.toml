@@ -1,10 +1,10 @@
 [package]
 name = "fa_seq_compressibility"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Youtao Lu <luyoutao@sas.upenn.edu>"]
 edition = "2018"
-license = "MIT/Apache-2.0"
-description = "From FASTA calculates sequence compressibility in fixed-sized windows"
+license = "MPL-2.0"
+description = "Calculate sequence compressibility in fixed-sized windows from FASTA"
 
 [dependencies]
 getopts = "0.2"
